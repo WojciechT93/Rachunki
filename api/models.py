@@ -16,6 +16,7 @@ class Outlay(models.Model):
     settled = models.DecimalField(db_column='Rozliczono', decimal_places=2, max_digits=16, validators=[MinValueValidator(0.01)])
     vat = models.BooleanField(db_column='Czy VAT?')
     is_settled = models.BooleanField(db_column='Czy spłacony?', default=False)
+    owner = models.ForeignKey('auth.User', on_delete=models.CASCADE)
 
     class Meta:
         db_table = "Wydatek"

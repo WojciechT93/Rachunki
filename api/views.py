@@ -2,7 +2,8 @@ from django.shortcuts import render
 from django.contrib.auth.models import User, Group
 from rest_framework import viewsets
 from rest_framework import permissions
-from api.serializers import UserSerializer, GroupSerializer
+from .models import Transfer, Outlay, Currency
+from api.serializers import UserSerializer, GroupSerializer, TransferSerializer, OutlaySerializer, CurrencySerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -21,3 +22,24 @@ class GroupViewSet(viewsets.ModelViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+
+class CurrencyViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows currences to be viewed or edited.
+    """
+    queryset = Currency.objects.all()
+    serializer_class = CurrencySerializer
+    permission_classes = [permissions.IsAdminUser]
+
+
+class OutlayViewSet(viewsets.ModelViewSet):
+    queryset = Outlay.objects.all()
+    serializer_class = OutlaySerializer
+    permission_classes = [permissions.IsAdminUser]
+
+
+class TransferViewSet(viewsets.ModelViewSet):
+    queryset = Transfer.objects.all()
+    serializer_class = TransferSerializer
+    permission_classes = [permissions.IsAdminUser]
