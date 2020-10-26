@@ -20,6 +20,7 @@ from api import views
 
 router = routers.DefaultRouter()
 router.register(r'users', views.UserViewSet)
+router.register(r'register', views.RegisterViewSet, 'register')
 router.register(r'groups', views.GroupViewSet)
 router.register(r'transfers', views.TransferViewSet)
 router.register(r'currency',views.CurrencyViewSet)

@@ -1,9 +1,11 @@
 from django.shortcuts import render
 from django.contrib.auth.models import User, Group
-from rest_framework import viewsets
-from rest_framework import permissions
+from rest_framework import viewsets, permissions, status, mixins
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from .models import Transfer, Outlay, Currency
-from api.serializers import UserSerializer, GroupSerializer, TransferSerializer, OutlaySerializer, CurrencySerializer
+from api.serializers import UserSerializer, GroupSerializer, TransferSerializer, OutlaySerializer, CurrencySerializer, RegisterSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -12,8 +14,20 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     queryset = User.objects.all().order_by('-date_joined')
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAdminUser]
 
+class RegisterViewSet(viewsets.ModelViewSet):
+    serializer_class = RegisterSerializer
+    queryset = User.objects.all()
+    permission_classes = [permissions.IsAdminUser]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        if user:
+            return Response({"user": UserSerializer(user, context=self.get_serializer_context()).data})
+        return Response(template_name='rest_framework')
 
 class GroupViewSet(viewsets.ModelViewSet):
     """
@@ -43,3 +57,6 @@ class TransferViewSet(viewsets.ModelViewSet):
     queryset = Transfer.objects.all()
     serializer_class = TransferSerializer
     permission_classes = [permissions.IsAdminUser]
+
+
+
