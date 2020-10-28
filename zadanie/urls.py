@@ -22,11 +22,13 @@ router = routers.DefaultRouter()
 router.register(r'users', views.UserViewSet)
 router.register(r'register', views.RegisterViewSet, 'register')
 router.register(r'groups', views.GroupViewSet)
-router.register(r'transfers', views.TransferViewSet)
-router.register(r'currency',views.CurrencyViewSet)
-router.register(r'outlay', views.OutlayViewSet)
+# router.register(r'transfers', views.TransferViewSet)
+# router.register(r'currency', views.CurrencyViewSet)
+# router.register(r'outlay', views.OutlayViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    path('currencies/', views.CurrencyListView.as_view()),
+    path('currency/<int:id>/', views.CurrencyDetailView.as_view())
 ]

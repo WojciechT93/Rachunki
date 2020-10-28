@@ -23,25 +23,25 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
-class GroupSerializer(serializers.HyperlinkedModelSerializer):
+class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
         fields = ['url', 'name']
 
 
-class OutlaySerializer(serializers.HyperlinkedModelSerializer):
+class OutlaySerializer(serializers.ModelSerializer):
     class Meta:
         model = Outlay
         fields = '__all__'
 
 
-class TransferSerializer(serializers.HyperlinkedModelSerializer):
+class TransferSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transfer
         fields = '__all__'
 
 
-class CurrencySerializer(serializers.HyperlinkedModelSerializer):
+class CurrencySerializer(serializers.ModelSerializer):
     class Meta:
         model = Currency
         fields = '__all__'

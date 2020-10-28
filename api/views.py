@@ -1,7 +1,10 @@
 from django.shortcuts import render
 from django.contrib.auth.models import User, Group
+from django.http import Http404
+from django.core import exceptions
 from rest_framework import viewsets, permissions, status, mixins
 from rest_framework.views import APIView
+from rest_framework import generics, mixins
 from rest_framework.response import Response
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from .models import Transfer, Outlay, Currency
@@ -16,6 +19,11 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAdminUser]
 
+class GroupViewSet(viewsets.ModelViewSet):
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+    permission_classes = [permissions.IsAdminUser]
+
 class RegisterViewSet(viewsets.ModelViewSet):
     serializer_class = RegisterSerializer
     queryset = User.objects.all()
@@ -27,36 +35,19 @@ class RegisterViewSet(viewsets.ModelViewSet):
         user = serializer.save()
         if user:
             return Response({"user": UserSerializer(user, context=self.get_serializer_context()).data})
-        return Response(template_name='rest_framework')
-
-class GroupViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows groups to be viewed or edited.
-    """
-    queryset = Group.objects.all()
-    serializer_class = GroupSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+class CurrencyListView(generics.ListCreateAPIView):
+    serializer_class = CurrencySerializer
+    queryset = Currency.objects.all()
 
-class CurrencyViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows currences to be viewed or edited.
-    """
+    
+
+class CurrencyDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Currency.objects.all()
     serializer_class = CurrencySerializer
-    permission_classes = [permissions.IsAdminUser]
+    lookup_field = 'id'
 
-
-class OutlayViewSet(viewsets.ModelViewSet):
-    queryset = Outlay.objects.all()
-    serializer_class = OutlaySerializer
-    permission_classes = [permissions.IsAdminUser]
-
-
-class TransferViewSet(viewsets.ModelViewSet):
-    queryset = Transfer.objects.all()
-    serializer_class = TransferSerializer
-    permission_classes = [permissions.IsAdminUser]
 
 
 
