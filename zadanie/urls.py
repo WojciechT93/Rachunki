@@ -30,5 +30,7 @@ urlpatterns = [
     path('', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('currencies/', views.CurrencyListView.as_view()),
-    path('currency/<int:id>/', views.CurrencyDetailView.as_view())
+    path('currency/<str:currency_name>/', views.CurrencyDetailView.as_view()),
+    path('outlays/', views.OutlaysListView.as_view()),
+    path('outlays/<int:id>', views.OutlayDetailView.as_view()),
 ]
