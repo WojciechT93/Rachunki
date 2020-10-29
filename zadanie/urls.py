@@ -32,5 +32,8 @@ urlpatterns = [
     path('currencies/', views.CurrencyListView.as_view()),
     path('currency/<str:currency_name>/', views.CurrencyDetailView.as_view()),
     path('outlays/', views.OutlaysListView.as_view()),
-    path('outlays/<int:id>', views.OutlayDetailView.as_view()),
+    path('outlay/<int:id>', views.OutlayDetailView.as_view()),
+    path('transfers/', views.TransfersListView.as_view()),
+    path('transfer/<int:id>', views.TransferDetailView.as_view()),
+
 ]
