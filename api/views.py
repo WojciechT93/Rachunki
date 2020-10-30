@@ -93,7 +93,7 @@ class TransferDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Transfer.objects.all()
         return Transfer.objects.filter(owner=self.request.user)
 
-class OutlaysListFilteredView(APIView):
+class StatiscticsListView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, format=None):
         sum_settled_name = 'Suma wszystkich wydatków rozliczonych'
@@ -101,20 +101,29 @@ class OutlaysListFilteredView(APIView):
         avg_vat_name = 'Średnia wartość przelewu VAT w miesiącu Wrzesień 2020'
 
         if request.user.is_superuser:
-            outlays = Outlay.objects.all()
-            transfers = Transfer.objects.all()
-        else:
-            outlays = Outlay.objects.filter(owner=self.request.user)
-            transfers = Transfer.objects.filter(owner=self.request.user)
-        sum_settled =  outlays.filter(is_settled=True
-                            ).aggregate(Sum('settled'))
-        sum_unsettled_USD = outlays.filter(is_settled=False
-                            ).filter(currency='USD'
-                            ).aggregate(Sum('to_settle'))
-        avg_vat = transfers.filter(is_vat=True
+            sum_unsettled_USD = Outlay.objects.filter(is_settled=False
+                                            ).filter(currency='USD'
+                                            ).aggregate(Sum('to_settle'))
+            avg_vat = Transfer.objects.filter(is_vat=True
                             ).filter(settled_date__year__gte=2020
                             ).filter(settled_date__month__gte=10
                             ).aggregate(Avg('brutto'))
+            sum_settled = Outlay.objects.filter(is_settled=True
+                                        ).aggregate(Sum('settled'))
+        else:
+            sum_unsettled_USD = Outlay.objects.filter(owner=self.request.user
+                                            ).filter(is_settled=False
+                                            ).filter(currency='USD'
+                                            ).aggregate(Sum('to_settle'))
+            avg_vat = Transfer.objects.filter(owner=self.request.user
+                                    ).filter(is_vat=True
+                                    ).filter(settled_date__year__gte=2020
+                                    ).filter(settled_date__month__gte=10
+                                    ).aggregate(Avg('brutto'))
+            sum_settled = Outlay.objects.filter(owner=self.request.user
+                                        ).filter(is_settled=True
+                                        ).aggregate(Sum('settled'))
+        
         return Response(data=({sum_settled_name:sum_settled['settled__sum']},
                             {sum_unsettled_name:sum_unsettled_USD['to_settle__sum']},
                             {avg_vat_name:avg_vat['brutto__avg']}), 

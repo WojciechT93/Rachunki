@@ -3,6 +3,7 @@ from rest_framework import serializers
 from .models import Outlay, Transfer, Currency
 from rest_framework.validators import UniqueValidator
 from datetime import datetime
+from django.db import transaction, DatabaseError
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -46,13 +47,18 @@ class TransferSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data['brutto'] = validated_data['netto'] + validated_data['vat']
-        self.check_and_update_outlay(validated_data['outlay'].id, 
+        validated_data['settled_date'] = datetime.now()
+        outlay = self.check_and_update_outlay(validated_data['outlay'].id, 
                                     validated_data['brutto'], 
                                     validated_data['owner'].id,
                                     validated_data['is_vat'],
                                     validated_data['currency'])
-        validated_data['settled_date'] = datetime.now()
-        return Transfer.objects.create(**validated_data)
+        try:
+            with transaction.atomic():
+                outlay.save()
+                return Transfer.objects.create(**validated_data)
+        except DatabaseError as error:
+            raise str(error)
     
     def check_and_update_outlay(self, outlay_id, brutto, transfer_owner, is_vat, currency):
         outlay = Outlay.objects.get(id = outlay_id)
@@ -61,10 +67,10 @@ class TransferSerializer(serializers.ModelSerializer):
             self.check_if_outlay_vat(outlay.vat, is_vat)
             self.check_if_is_settled(outlay.is_settled)
             self.check_if_same_currency(outlay.currency, currency)
-            outlay.settled += brutto 
-            outlay.save()
+            outlay.settled += brutto
         else:
             raise serializers.ValidationError("There is no outlay for this transfer.")
+        return outlay
     
     def check_if_user_is_owner(self, outlay_owner, transfer_owner):
         if outlay_owner != transfer_owner:

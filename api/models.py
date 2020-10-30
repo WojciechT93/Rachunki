@@ -1,4 +1,5 @@
 from django.db import models
+from django.db import transaction, DatabaseError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
 
@@ -29,7 +30,7 @@ class Outlay(models.Model):
         super(Outlay, self).__init__(*args, **kwargs)
         self.old_settled = self.settled
         self.old_to_settle = self.to_settle
-
+    
     def save(self, *args, **kwargs):
         self.count_to_settle()
         self.check_if_is_settled()
@@ -51,9 +52,6 @@ class Outlay(models.Model):
         else:
             self.is_settled = False
 
-    class Meta:
-        db_table = "Wydatek"
-
 
 
 class Transfer(models.Model):
@@ -71,8 +69,12 @@ class Transfer(models.Model):
     def delete(self, *args, **kwargs):
         outlay = Outlay.objects.get(id = self.outlay.id)
         outlay.settled -= self.brutto
-        outlay.save()
-        super(Transfer, self).delete(*args, **kwargs)
+        try:
+            with transaction.atomic():
+                outlay.save()
+                super(Transfer, self).delete(*args, **kwargs)
+        except DatabaseError as de:
+            raise str(de)
 
     class Meta:
         db_table = "Przelew"
