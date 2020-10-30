@@ -8,6 +8,9 @@ class Currency(models.Model):
     
     currency_name = models.CharField(db_column='Nazwa', max_length=15, primary_key=True)
 
+    def __str__(self):
+        return self.currency_name
+    
     class Meta:
         db_table = "Waluta"
 

@@ -35,5 +35,5 @@ urlpatterns = [
     path('outlay/<int:id>', views.OutlayDetailView.as_view()),
     path('transfers/', views.TransfersListView.as_view()),
     path('transfer/<int:id>', views.TransferDetailView.as_view()),
-
+    path('statystyki/', views.OutlaysListFilteredView.as_view())
 ]
