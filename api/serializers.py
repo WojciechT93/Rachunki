@@ -6,6 +6,7 @@ from datetime import datetime
 from django.db import transaction, DatabaseError
 
 
+
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = User
@@ -25,11 +26,17 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
-
 class GroupSerializer(serializers.ModelSerializer):
-    class Meta:return
-        fields = '__all__'
+    class Meta:
+        model = Group
+        fields = ['url', 'name']
 
+
+
+class OutlaySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Outlay
+        fields = '__all__'
 
 
 class TransferSerializer(serializers.ModelSerializer):
