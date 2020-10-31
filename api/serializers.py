@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User, Group
-from rest_framework import serializers
+from rest_framework import serializers, status
 from .models import Outlay, Transfer, Currency
 from rest_framework.validators import UniqueValidator
 from datetime import datetime
@@ -27,15 +27,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class GroupSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Group
-        fields = ['url', 'name']
-
-
-
-class OutlaySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Outlay
+    class Meta:return
         fields = '__all__'
 
 
@@ -78,15 +70,21 @@ class TransferSerializer(serializers.ModelSerializer):
 
     def check_if_is_settled(self, outlay_is_settled):
         if outlay_is_settled:
-            return serializers.ValidationError("This outlay is settled.")
+            res = serializers.ValidationError("This outlay is settled.")
+            res.status_code = status.HTTP_409_CONFLICT
+            raise res
 
     def check_if_outlay_vat(self, outlay_is_vat, transfer_is_vat):
         if transfer_is_vat == True and outlay_is_vat == False:
-            raise serializers.ValidationError("Vat transfer can't be done on this non-vat outlay")
+            res = serializers.ValidationError("Vat transfer can't be done on this non-vat outlay")
+            res.status_code = status.HTTP_409_CONFLICT
+            raise res
 
     def check_if_same_currency(self, outlay_currency, transfer_currency):
         if outlay_currency != transfer_currency:
-            raise serializers.ValidationError("Outlay is in different currency then transfer.")
+            res = serializers.ValidationError("Outlay is in different currency then transfer.")
+            res.status_code = status.HTTP_409_CONFLICT
+            raise res
 
 
 

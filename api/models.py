@@ -9,11 +9,13 @@ class Currency(models.Model):
     
     currency_name = models.CharField(db_column='Nazwa', max_length=15, primary_key=True)
 
+    class Meta:
+        db_table = "Waluta"
+
     def __str__(self):
         return self.currency_name
     
-    class Meta:
-        db_table = "Waluta"
+    
 
 
 
@@ -25,6 +27,9 @@ class Outlay(models.Model):
     vat = models.BooleanField(db_column='Czy VAT?')
     is_settled = models.BooleanField(db_column='Czy spłacony?', default=False)
     owner = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "Wydatek"
 
     def __init__(self, *args, **kwargs):
         super(Outlay, self).__init__(*args, **kwargs)
