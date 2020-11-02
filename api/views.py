@@ -1,4 +1,3 @@
-import json
 from django.contrib.auth.models import User, Group
 from django.db.models import Avg, Sum
 from rest_framework import viewsets, status, generics
@@ -13,7 +12,8 @@ from .serializers import (
     OutlaySerializer, CurrencySerializer, RegisterSerializer
 )
 from .permissions import (
-    CurrencyDetailAllowedMethods, CurrencyListAlloweMethods, OutlaysListAllowedMethods
+    CurrencyDetailAllowedMethods, CurrencyListAllowedMethods,
+    OutlaysListAllowedMethods
 )
 
 
@@ -42,7 +42,7 @@ class RegisterViewSet(viewsets.ModelViewSet):
 class CurrencyListView(generics.ListCreateAPIView):
     serializer_class = CurrencySerializer
     queryset = Currency.objects.all()
-    permission_classes = [CurrencyListAlloweMethods]
+    permission_classes = [CurrencyListAllowedMethods]
 
 class CurrencyDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Currency.objects.all()
