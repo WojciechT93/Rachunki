@@ -51,6 +51,8 @@ class Outlay(models.Model):
                 self.to_settle = self.to_settle + (self.old_settled - self.settled)
         if self.to_settle < 0:
             self.to_settle = 0
+        if self.to_settle > self.total_amount:
+            self.to_settle = self.total_amount
 
     def check_if_is_settled(self):
         if self.to_settle == 0:
