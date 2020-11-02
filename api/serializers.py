@@ -1,9 +1,8 @@
-from django.contrib.auth.models import User, Group
-from rest_framework import serializers, status
-from .models import Outlay, Transfer, Currency
-from rest_framework.validators import UniqueValidator
 from datetime import datetime
+from django.contrib.auth.models import User, Group
 from django.db import transaction, DatabaseError
+from rest_framework import serializers, status
+from api.models import Outlay, Transfer, Currency
 
 
 
@@ -18,11 +17,11 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'username', 'email', 'password')
         extra_kwargs = {'password' : {'write_only': True}}
-        
+
     def create(self, validated_data):
         user = User.objects.create_user(
-            validated_data['username'],               
-            validated_data['email'], 
+            validated_data['username'],
+            validated_data['email'],
             validated_data['password']
         )
         return user
@@ -38,8 +37,16 @@ class GroupSerializer(serializers.ModelSerializer):
 class OutlaySerializer(serializers.ModelSerializer):
     class Meta:
         model = Outlay
-        fields = '__all__'
-
+        fields = [
+            'currency',
+            'total_amount',
+            'to_settle',
+            'settled',
+            'vat',
+            'is_settled',
+            'owner'
+        ]
+        read_only_fields = ['to_settle', 'settled', 'is_settled']
 
 class TransferSerializer(serializers.ModelSerializer):
     class Meta:
@@ -47,7 +54,7 @@ class TransferSerializer(serializers.ModelSerializer):
         fields = ['netto', 'vat', 'currency', 'outlay', 'is_vat']
 
     def create(self, validated_data):
-        validated_data['brutto'] = ( 
+        validated_data['brutto'] = (
             validated_data['netto'] + validated_data['vat']
         )
         validated_data['settled_date'] = datetime.now()
@@ -58,7 +65,7 @@ class TransferSerializer(serializers.ModelSerializer):
                 return Transfer.objects.create(**validated_data)
         except DatabaseError as error:
             raise str(error)
-    
+
     def check_and_update_outlay(self, data):
         outlay = Outlay.objects.get(id = data['outlay'].id)
         if outlay:
@@ -72,7 +79,7 @@ class TransferSerializer(serializers.ModelSerializer):
                 "There is no outlay for this transfer."
             )
         return outlay
-    
+
     def check_if_user_is_owner(self, outlay_owner, transfer_owner):
         if outlay_owner != transfer_owner:
             raise serializers.ValidationError("User is not owner of outlay")
@@ -84,7 +91,7 @@ class TransferSerializer(serializers.ModelSerializer):
             raise res
 
     def check_if_outlay_vat(self, outlay_is_vat, transfer_is_vat):
-        if transfer_is_vat == True and outlay_is_vat == False:
+        if transfer_is_vat and not outlay_is_vat:
             res = serializers.ValidationError(
                 "Vat transfer can't be done on this non-vat outlay"
             )

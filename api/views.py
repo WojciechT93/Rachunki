@@ -1,25 +1,21 @@
-from django.shortcuts import render
+import json
 from django.contrib.auth.models import User, Group
-from django.http import Http404
-from django.core import exceptions
 from django.db.models import Avg, Sum
 from rest_framework import viewsets, status, generics
 from rest_framework.permissions import (
-    IsAuthenticated, IsAdminUser, IsAuthenticatedOrReadOnly
+    IsAuthenticated, IsAdminUser,
 )
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.authentication import (
-    SessionAuthentication, BasicAuthentication
-)
 from .models import Transfer, Outlay, Currency
-from api.serializers import (
-    UserSerializer, GroupSerializer, TransferSerializer, OutlaySerializer,CurrencySerializer, RegisterSerializer
+from .serializers import (
+    UserSerializer, GroupSerializer, TransferSerializer,
+    OutlaySerializer, CurrencySerializer, RegisterSerializer
 )
-from api.permissions import (
+from .permissions import (
     CurrencyDetailAllowedMethods, CurrencyListAlloweMethods, OutlaysListAllowedMethods
 )
-import json
+
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -76,7 +72,7 @@ class OutlayDetailView(generics.RetrieveUpdateDestroyAPIView):
         if self.request.user.is_superuser:
             return Outlay.objects.all()
         return Outlay.objects.filter(owner=self.request.user)
-    
+
 
 class TransfersListView(generics.ListCreateAPIView):
     queryset = Transfer.objects.all()
@@ -88,7 +84,7 @@ class TransfersListView(generics.ListCreateAPIView):
         if self.request.user.is_superuser:
             return Transfer.objects.all()
         return Transfer.objects.filter(owner=self.request.user)
-    
+
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
@@ -107,12 +103,12 @@ class StatiscticsListView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, format=None):
         sum_settled_name = 'Suma wszystkich wydatków rozliczonych'
-        sum_unsettled_name = ('Suma wszystkich wydatków nierozliczonych ' 
+        sum_unsettled_name = ('Suma wszystkich wydatków nierozliczonych '
                               'w walucie “USD”')
         avg_vat_name = 'Średnia wartość przelewu VAT w miesiącu Wrzesień 2020'
 
         if request.user.is_superuser:
-            sum_unsettled_USD = Outlay.objects.filter(is_settled=False
+            sum_unsettled_usd = Outlay.objects.filter(is_settled=False
                                              ).filter(currency='USD'
                                              ).aggregate(Sum('to_settle'))
             avg_vat = Transfer.objects.filter(is_vat=True
@@ -122,7 +118,7 @@ class StatiscticsListView(APIView):
             sum_settled = Outlay.objects.filter(is_settled=True
                                        ).aggregate(Sum('settled'))
         else:
-            sum_unsettled_USD = Outlay.objects.filter(owner=self.request.user
+            sum_unsettled_usd = Outlay.objects.filter(owner=self.request.user
                                              ).filter(is_settled=False
                                              ).filter(currency='USD'
                                              ).aggregate(Sum('to_settle'))
@@ -134,19 +130,10 @@ class StatiscticsListView(APIView):
             sum_settled = Outlay.objects.filter(owner=self.request.user
                                        ).filter(is_settled=True
                                        ).aggregate(Sum('settled'))
-        
+
         data = (
-            {sum_settled_name:sum_settled['settled__sum']},   
-            {sum_unsettled_name:sum_unsettled_USD['to_settle__sum']},
+            {sum_settled_name:sum_settled['settled__sum']},
+            {sum_unsettled_name:sum_unsettled_usd['to_settle__sum']},
             {avg_vat_name:avg_vat['brutto__avg']}
         )
         return Response(data=data, status=status.HTTP_200_OK)
-    
-
-    
-    
-    
-    
-
-
-
