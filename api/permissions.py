@@ -4,7 +4,8 @@ class CurrencyDetailAllowedMethods(BasePermission):
     user_methods = ['GET', 'PUT', 'PATCH']
 
     def has_permission(self, request, view):
-        if request.method in self.user_methods and request.user.is_authenticated:
+        if (request.method in self.user_methods and 
+                request.user.is_authenticated):
             return True
         return False
 

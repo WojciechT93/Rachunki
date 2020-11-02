@@ -20,9 +20,11 @@ class RegisterSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password' : {'write_only': True}}
         
     def create(self, validated_data):
-        user = User.objects.create_user(validated_data['username'],
-                                        validated_data['email'], 
-                                        validated_data['password'])
+        user = User.objects.create_user(
+            validated_data['username'],               
+            validated_data['email'], 
+            validated_data['password']
+        )
         return user
 
 
@@ -45,13 +47,11 @@ class TransferSerializer(serializers.ModelSerializer):
         fields = ['netto', 'vat', 'currency', 'outlay', 'is_vat']
 
     def create(self, validated_data):
-        validated_data['brutto'] = validated_data['netto'] + validated_data['vat']
+        validated_data['brutto'] = ( 
+            validated_data['netto'] + validated_data['vat']
+        )
         validated_data['settled_date'] = datetime.now()
-        outlay = self.check_and_update_outlay(validated_data['outlay'].id, 
-                                    validated_data['brutto'], 
-                                    validated_data['owner'].id,
-                                    validated_data['is_vat'],
-                                    validated_data['currency'])
+        outlay = self.check_and_update_outlay(validated_data)
         try:
             with transaction.atomic():
                 outlay.save()
@@ -59,16 +59,18 @@ class TransferSerializer(serializers.ModelSerializer):
         except DatabaseError as error:
             raise str(error)
     
-    def check_and_update_outlay(self, outlay_id, brutto, transfer_owner, is_vat, currency):
-        outlay = Outlay.objects.get(id = outlay_id)
+    def check_and_update_outlay(self, data):
+        outlay = Outlay.objects.get(id = data['outlay'].id)
         if outlay:
-            self.check_if_user_is_owner(outlay.owner_id, transfer_owner)
-            self.check_if_outlay_vat(outlay.vat, is_vat)
+            self.check_if_user_is_owner(outlay.owner_id, data['owner'].id)
+            self.check_if_outlay_vat(outlay.vat, data['is_vat'])
             self.check_if_is_settled(outlay.is_settled)
-            self.check_if_same_currency(outlay.currency, currency)
-            outlay.settled += brutto
+            self.check_if_same_currency(outlay.currency, data['currency'])
+            outlay.settled += data['brutto']
         else:
-            raise serializers.ValidationError("There is no outlay for this transfer.")
+            raise serializers.ValidationError(
+                "There is no outlay for this transfer."
+            )
         return outlay
     
     def check_if_user_is_owner(self, outlay_owner, transfer_owner):
@@ -83,13 +85,17 @@ class TransferSerializer(serializers.ModelSerializer):
 
     def check_if_outlay_vat(self, outlay_is_vat, transfer_is_vat):
         if transfer_is_vat == True and outlay_is_vat == False:
-            res = serializers.ValidationError("Vat transfer can't be done on this non-vat outlay")
+            res = serializers.ValidationError(
+                "Vat transfer can't be done on this non-vat outlay"
+            )
             res.status_code = status.HTTP_409_CONFLICT
             raise res
 
     def check_if_same_currency(self, outlay_currency, transfer_currency):
         if outlay_currency != transfer_currency:
-            res = serializers.ValidationError("Outlay is in different currency then transfer.")
+            res = serializers.ValidationError(
+                "Outlay is in different currency then transfer."
+            )
             res.status_code = status.HTTP_409_CONFLICT
             raise res
 
