@@ -21,7 +21,8 @@ class Currency(models.Model):
 
 class Outlay(models.Model):
     
-    currency= models.ForeignKey(Currency, on_delete=models.CASCADE)
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
+    total_amount = models.DecimalField(db_column='Cała kwota wydatku', decimal_places=2, max_digits=16, validators=[MinValueValidator(0.01)])
     to_settle = models.DecimalField(db_column='Do rozliczenia', decimal_places=2, max_digits=16, validators=[MinValueValidator(0.01)])
     settled = models.DecimalField(db_column='Rozliczono', decimal_places=2, max_digits=16, default=Decimal(0.00),validators=[MinValueValidator(0.00)])
     vat = models.BooleanField(db_column='Czy VAT?')
