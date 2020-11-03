@@ -54,6 +54,7 @@ class OutlaySerializer(serializers.ModelSerializer):
     class Meta:
         model = Outlay
         fields = [
+            'id',
             'currency',
             'total_amount',
             'to_settle',
@@ -62,7 +63,7 @@ class OutlaySerializer(serializers.ModelSerializer):
             'is_settled',
             'owner'
         ]
-        read_only_fields = ['to_settle', 'settled', 'is_settled']
+        read_only_fields = ['id', 'to_settle', 'settled', 'is_settled']
 
     def create(self, validated_data):
         validated_data['to_settle'] = validated_data['total_amount']
@@ -75,6 +76,7 @@ class TransferSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transfer
         fields = [
+            'id',
             'netto',
             'vat',
             'brutto',
@@ -84,7 +86,7 @@ class TransferSerializer(serializers.ModelSerializer):
             'sent_date',
             'is_settled'
         ]
-        read_only_fields = ['is_settled', 'brutto', 'sent_date']
+        read_only_fields = ['id', 'is_settled', 'brutto', 'sent_date']
 
     def create(self, validated_data):
         """
@@ -167,6 +169,7 @@ class SettleTransferSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transfer
         fields = [
+            'id',
             'netto',
             'vat',
             'brutto',
@@ -177,6 +180,7 @@ class SettleTransferSerializer(serializers.ModelSerializer):
             'is_settled'
         ]
         read_only_fields = [
+            'id',
             'netto',
             'vat',
             'brutto',
