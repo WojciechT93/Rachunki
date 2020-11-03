@@ -138,7 +138,7 @@ class Outlay(models.Model):
         Example string:
         Przelew VAT użytkownika Bogdan.
         """
-        return ("Przelew " + ("VAT" if self.vat else '') + " użytkownika "
+        return ("Wydatek " + ("VAT" if self.vat else '') + " użytkownika "
                 + str(self.owner))
 
 
@@ -193,7 +193,10 @@ class Transfer(models.Model):
         on_delete=models.CASCADE
     )
     sent_date = models.DateTimeField(db_column='Data przelewu')
-    is_setted = models.BooleanField(db_column='Czy rozliczony?', default=False)
+    is_settled = models.BooleanField(
+        db_column='Czy rozliczony?',
+        default=False
+    )
     owner = models.ForeignKey(
         'auth.User',
         db_column='Użytkownik',
