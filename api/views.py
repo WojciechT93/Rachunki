@@ -108,7 +108,7 @@ class TransferDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Transfer.objects.all()
         return Transfer.objects.filter(owner=self.request.user)
 
-class StatiscticsListView(APIView):
+class StatisticsListView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, format=None):
         sum_settled_name = 'Suma wszystkich wydatków rozliczonych'
@@ -121,8 +121,8 @@ class StatiscticsListView(APIView):
                                              ).filter(currency='USD'
                                              ).aggregate(Sum('to_settle'))
             avg_vat = Transfer.objects.filter(is_vat=True
-                                     ).filter(settled_date__year__gte=2020
-                                     ).filter(settled_date__month__gte=10
+                                     ).filter(sent_date__year__gte=2020
+                                     ).filter(sent_date__month__gte=10
                                      ).aggregate(Avg('brutto'))
             sum_settled = Outlay.objects.filter(is_settled=True
                                        ).aggregate(Sum('settled'))
@@ -133,8 +133,8 @@ class StatiscticsListView(APIView):
                                              ).aggregate(Sum('to_settle'))
             avg_vat = Transfer.objects.filter(owner=self.request.user
                                      ).filter(is_vat=True
-                                     ).filter(settled_date__year__gte=2020
-                                     ).filter(settled_date__month__gte=10
+                                     ).filter(sent_date__year__gte=2020
+                                     ).filter(sent_date__month__gte=10
                                      ).aggregate(Avg('brutto'))
             sum_settled = Outlay.objects.filter(owner=self.request.user
                                        ).filter(is_settled=True
