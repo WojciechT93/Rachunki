@@ -188,8 +188,8 @@ class SettleTransferSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         if validated_data['is_settled']:
-            outlay = Outlay.objects.get(validated_data['outlay'].id)
-            outlay.settled += validated_data['brutto']
+            outlay = Outlay.objects.get(id = instance.outlay.id)
+            outlay.settled += instance.brutto
             with transaction.atomic():
                 outlay.save()
                 return (super(SettleTransferSerializer,self)
