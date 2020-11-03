@@ -166,6 +166,10 @@ class TransferSerializer(serializers.ModelSerializer):
             raise res
 
 class SettleTransferSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Transfer model objects. 
+    Used for admin settle transfer functionality.
+    """
     class Meta:
         model = Transfer
         fields = [
@@ -191,6 +195,13 @@ class SettleTransferSerializer(serializers.ModelSerializer):
         ]
 
     def update(self, instance, validated_data):
+        """
+        Overrides update method.
+        If transfers 'is_settled' is true:
+        updates outlays 'settled' value with 'brutto' from transfer.
+        Updates outlay and transfer objects.
+        If false,
+        """
         if validated_data['is_settled']:
             outlay = Outlay.objects.get(id = instance.outlay.id)
             outlay.settled += instance.brutto
