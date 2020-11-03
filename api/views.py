@@ -7,15 +7,15 @@ from rest_framework.permissions import (
 )
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import Transfer, Outlay, Currency
+from .models import Transfer, Expense, Currency
 from .serializers import (
     UserSerializer, GroupSerializer, TransferSerializer,
-    OutlaySerializer, CurrencySerializer, RegisterSerializer,
+    ExpenseSerializer, CurrencySerializer, RegisterSerializer,
     SettleTransferSerializer
 )
 from .permissions import (
     CurrencyDetailAllowedMethods, CurrencyListAllowedMethods,
-    OutlaysListAllowedMethods
+    ExpensesListAllowedMethods
 )
 
 
@@ -52,28 +52,28 @@ class CurrencyDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'currency_name'
     permission_classes = [CurrencyDetailAllowedMethods]
 
-class OutlaysListView(generics.ListCreateAPIView):
-    queryset = Outlay.objects.all()
-    serializer_class = OutlaySerializer
+class ExpensesListView(generics.ListCreateAPIView):
+    queryset = Expense.objects.all()
+    serializer_class = ExpenseSerializer
     lookup_field = 'id'
-    permission_classes = [OutlaysListAllowedMethods, IsAuthenticated]
+    permission_classes = [ExpensesListAllowedMethods, IsAuthenticated]
 
     def get_queryset(self):
         if self.request.user.is_superuser:
-            return Outlay.objects.all()
-        return Outlay.objects.filter(owner=self.request.user)
+            return Expense.objects.all()
+        return Expense.objects.filter(owner=self.request.user)
 
 
-class OutlayDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Outlay.objects.all()
-    serializer_class = OutlaySerializer
+class ExpenseDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Expense.objects.all()
+    serializer_class = ExpenseSerializer
     lookup_field = 'id'
     permission_classes = [IsAdminUser]
 
     def get_queryset(self):
         if self.request.user.is_superuser:
-            return Outlay.objects.all()
-        return Outlay.objects.filter(owner=self.request.user)
+            return Expense.objects.all()
+        return Expense.objects.filter(owner=self.request.user)
 
 
 class TransfersListView(generics.ListCreateAPIView):
@@ -119,17 +119,17 @@ class StatisticsListView(APIView):
         avg_vat_name = 'Średnia wartość przelewu VAT w miesiącu Wrzesień 2020'
 
         if request.user.is_superuser:
-            sum_unsettled_usd = Outlay.objects.filter(is_settled=False
+            sum_unsettled_usd = Expense.objects.filter(is_settled=False
                                              ).filter(currency='USD'
                                              ).aggregate(Sum('to_settle'))
             avg_vat = Transfer.objects.filter(is_vat=True
                                      ).filter(sent_date__year__gte=2020
                                      ).filter(sent_date__month__gte=10
                                      ).aggregate(Avg('brutto'))
-            sum_settled = Outlay.objects.filter(is_settled=True
+            sum_settled = Expense.objects.filter(is_settled=True
                                        ).aggregate(Sum('settled'))
         else:
-            sum_unsettled_usd = Outlay.objects.filter(owner=self.request.user
+            sum_unsettled_usd = Expense.objects.filter(owner=self.request.user
                                              ).filter(is_settled=False
                                              ).filter(currency='USD'
                                              ).aggregate(Sum('to_settle'))
@@ -138,7 +138,7 @@ class StatisticsListView(APIView):
                                      ).filter(sent_date__year__gte=2020
                                      ).filter(sent_date__month__gte=10
                                      ).aggregate(Avg('brutto'))
-            sum_settled = Outlay.objects.filter(owner=self.request.user
+            sum_settled = Expense.objects.filter(owner=self.request.user
                                        ).filter(is_settled=True
                                        ).aggregate(Sum('settled'))
 

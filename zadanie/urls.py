@@ -24,7 +24,7 @@ router.register(r'register', views.RegisterViewSet, 'register')
 router.register(r'groups', views.GroupViewSet)
 # router.register(r'transfers', views.TransferViewSet)
 # router.register(r'currency', views.CurrencyViewSet)
-# router.register(r'outlay', views.OutlayViewSet)
+# router.register(r'expense', views.ExpenseViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -32,8 +32,8 @@ urlpatterns = [
                                namespace='rest_framework')),
     path('currencies/', views.CurrencyListView.as_view()),
     path('currency/<str:currency_name>/', views.CurrencyDetailView.as_view()),
-    path('outlays/', views.OutlaysListView.as_view()),
-    path('outlay/<int:id>', views.OutlayDetailView.as_view()),
+    path('expenses/', views.ExpensesListView.as_view()),
+    path('expense/<int:id>', views.ExpenseDetailView.as_view()),
     path('transfers/', views.TransfersListView.as_view()),
     path('transfer/<int:id>', views.TransferDetailView.as_view()),
     path('statystyki/', views.StatisticsListView.as_view())

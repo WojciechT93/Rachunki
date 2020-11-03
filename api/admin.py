@@ -1,8 +1,8 @@
 from django.contrib import admin
-from .models import Transfer, Outlay, Currency
+from .models import Transfer, Expense, Currency
 # Register your models here.
 
 
 admin.site.register(Transfer)
-admin.site.register(Outlay)
+admin.site.register(Expense)
 admin.site.register(Currency)

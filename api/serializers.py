@@ -6,7 +6,7 @@ from datetime import datetime
 from django.contrib.auth.models import User, Group
 from django.db import transaction
 from rest_framework import serializers, status
-from api.models import Outlay, Transfer, Currency
+from api.models import Expense, Transfer, Currency
 
 
 
@@ -47,12 +47,12 @@ class GroupSerializer(serializers.ModelSerializer):
 
 
 
-class OutlaySerializer(serializers.ModelSerializer):
+class ExpenseSerializer(serializers.ModelSerializer):
     """
-    Serializer for Outlay model objects.
+    Serializer for Expense model objects.
     """
     class Meta:
-        model = Outlay
+        model = Expense
         fields = [
             'id',
             'currency',
@@ -67,7 +67,7 @@ class OutlaySerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data['to_settle'] = validated_data['total_amount']
-        return Outlay.objects.create(**validated_data)
+        return Expense.objects.create(**validated_data)
 
 class TransferSerializer(serializers.ModelSerializer):
     """
@@ -81,7 +81,7 @@ class TransferSerializer(serializers.ModelSerializer):
             'vat',
             'brutto',
             'currency',
-            'outlay',
+            'expense',
             'is_vat',
             'sent_date',
             'is_settled'
@@ -98,76 +98,76 @@ class TransferSerializer(serializers.ModelSerializer):
             validated_data['netto'] + validated_data['vat']
         )
         validated_data['sent_date'] = datetime.now()
-        self.check_outlay(validated_data)
+        self.check_expense(validated_data)
         return Transfer.objects.create(**validated_data)
 
-    def check_outlay(self, data):
+    def check_expense(self, data):
         """
-        Checks provides functions for checking if outlay matches the
+        Checks provides functions for checking if expense matches the
         transfer.
-        Raises error if there is no outlay for transfer.
+        Raises error if there is no expense for transfer.
         """
-        outlay = Outlay.objects.get(id = data['outlay'].id)
-        if outlay:
-            self.check_if_user_is_owner(outlay.owner_id, data['owner'].id)
-            self.check_if_outlay_vat(outlay.vat, data['is_vat'])
-            self.check_if_is_settled(outlay.is_settled)
-            self.check_if_same_currency(outlay.currency, data['currency'])
+        expense = Expense.objects.get(id = data['expense'].id)
+        if expense:
+            self.check_if_user_is_owner(expense.owner_id, data['owner'].id)
+            self.check_if_expense_vat(expense.vat, data['is_vat'])
+            self.check_if_is_settled(expense.is_settled)
+            self.check_if_same_currency(expense.currency, data['currency'])
         else:
             raise serializers.ValidationError(
-                "There is no outlay for this transfer."
+                "There is no expense for this transfer."
             )
 
     @staticmethod
-    def check_if_user_is_owner(outlay_owner, transfer_owner):
+    def check_if_user_is_owner(expense_owner, transfer_owner):
         """
         Checks if user making transfer is its owner,
         else raises custom error message
         """
-        if outlay_owner != transfer_owner:
-            raise serializers.ValidationError("User is not owner of outlay")
+        if expense_owner != transfer_owner:
+            raise serializers.ValidationError("User is not owner of expense")
 
     @staticmethod
-    def check_if_is_settled(outlay_is_settled):
+    def check_if_is_settled(expense_is_settled):
         """
-        Checks if outlay is not already settled,
+        Checks if expense is not already settled,
         else raises custom error with 409 status.
         """
-        if outlay_is_settled:
-            res = serializers.ValidationError("This outlay is settled.")
+        if expense_is_settled:
+            res = serializers.ValidationError("This expense is settled.")
             res.status_code = status.HTTP_409_CONFLICT
             raise res
 
     @staticmethod
-    def check_if_outlay_vat(outlay_is_vat, transfer_is_vat):
+    def check_if_expense_vat(expense_is_vat, transfer_is_vat):
         """
         Checks if transfers field "is_vat" is set to "True" and
-        selected outlays has "is_vat" set to "False",
+        selected expenses has "is_vat" set to "False",
         then raises custom error message with status 409.
         """
-        if transfer_is_vat and not outlay_is_vat:
+        if transfer_is_vat and not expense_is_vat:
             res = serializers.ValidationError(
-                "Vat transfer can't be done on this non-vat outlay"
+                "Vat transfer can't be done on this non-vat expense"
             )
             res.status_code = status.HTTP_409_CONFLICT
             raise res
 
     @staticmethod
-    def check_if_same_currency(outlay_currency, transfer_currency):
+    def check_if_same_currency(expense_currency, transfer_currency):
         """
-        Checks if transfer and selected outlay are in same currency,
+        Checks if transfer and selected expense are in same currency,
         else raises custom error message with status 409.
         """
-        if outlay_currency != transfer_currency:
+        if expense_currency != transfer_currency:
             res = serializers.ValidationError(
-                "Outlay is in different currency then transfer."
+                "Expense is in different currency then transfer."
             )
             res.status_code = status.HTTP_409_CONFLICT
             raise res
 
 class SettleTransferSerializer(serializers.ModelSerializer):
     """
-    Serializer for Transfer model objects. 
+    Serializer for Transfer model objects.
     Used for admin settle transfer functionality.
     """
     class Meta:
@@ -178,7 +178,7 @@ class SettleTransferSerializer(serializers.ModelSerializer):
             'vat',
             'brutto',
             'currency',
-            'outlay',
+            'expense',
             'is_vat',
             'sent_date',
             'is_settled'
@@ -189,7 +189,7 @@ class SettleTransferSerializer(serializers.ModelSerializer):
             'vat',
             'brutto',
             'currency',
-            'outlay',
+            'expense',
             'is_vat',
             'sent_date'
         ]
@@ -198,15 +198,15 @@ class SettleTransferSerializer(serializers.ModelSerializer):
         """
         Overrides update method.
         If transfers 'is_settled' is true:
-        updates outlays 'settled' value with 'brutto' from transfer.
-        Updates outlay and transfer objects.
+        updates expenses 'settled' value with 'brutto' from transfer.
+        Updates expense and transfer objects.
         If false,
         """
         if validated_data['is_settled']:
-            outlay = Outlay.objects.get(id = instance.outlay.id)
-            outlay.settled += instance.brutto
+            expense = Expense.objects.get(id = instance.expense.id)
+            expense.settled += instance.brutto
             with transaction.atomic():
-                outlay.save()
+                expense.save()
                 return (super(SettleTransferSerializer,self)
                             .update(instance, validated_data))
 

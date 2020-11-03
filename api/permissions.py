@@ -35,9 +35,9 @@ class CurrencyListAllowedMethods(BasePermission):
             return True
         return False
 
-class OutlaysListAllowedMethods(BasePermission):
+class ExpensesListAllowedMethods(BasePermission):
     """
-    Works with OutlaysListView.
+    Works with ExpensesListView.
     Gives only GET permissions for authorized user.
     Unauthorized users get nothing.
     Admin Gets permissions for all actions.

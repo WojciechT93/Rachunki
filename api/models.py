@@ -28,20 +28,20 @@ class Currency(models.Model):
         return self.currency_name
 
 
-class Outlay(models.Model):
+class Expense(models.Model):
     """
-    Outlay model class.
-    Every outlay object has fields:
+    Expense model class.
+    Every expense object has fields:
     curreny- foreign key of Currency model object, its the currency in
-        which outlay has to be paid
+        which expense has to be paid
     total_amount- whole amount of money that has to be paid
     to_settle- Amount of money that still needs to be paid
     settled- Amount of money that has been already paid
-    vat- Boolean field, true indicates that the outlay can be paid
+    vat- Boolean field, true indicates that the expense can be paid
         with vat transfer.nsfer.
-    is_settled- boolean field, True value indicates that whole outlay
+    is_settled- boolean field, True value indicates that whole expense
         has been paid off.
-    owner- foreign key of User, provides user that the outlay
+    owner- foreign key of User, provides user that the expense
         is imposed on.
     """
     currency = models.ForeignKey(
@@ -82,11 +82,11 @@ class Outlay(models.Model):
     def __init__(self, *args, **kwargs):
         """
         Overrides __init__.
-        Saves 'settled' value of Outlay objects
+        Saves 'settled' value of Expense objects
         for updates purposes.
         """
 
-        super(Outlay, self).__init__(*args, **kwargs)
+        super(Expense, self).__init__(*args, **kwargs)
         self.old_settled = self.settled
 
     def save(self, *args, **kwargs):
@@ -97,7 +97,7 @@ class Outlay(models.Model):
 
         self.count_to_settle()
         self.check_if_is_settled()
-        super(Outlay, self).save(*args, **kwargs)
+        super(Expense, self).save(*args, **kwargs)
         self.old_settled = self.settled
 
     def count_to_settle(self):
@@ -134,7 +134,7 @@ class Outlay(models.Model):
 
     def __str__(self):
         """
-        Returns string represenatation of outlay objest.
+        Returns string represenatation of expense objest.
         Example string:
         Przelew VAT użytkownika Bogdan.
         """
@@ -154,7 +154,7 @@ class Transfer(models.Model):
     brutto- Sum of netto and vat
     currency- foreign key of Currency object, indicates currency of
         paid amount
-    outlay- foreign key of Outlay object, indicates for which outlay
+    expense- foreign key of Expense object, indicates for which expense
         the transfer has been sent
     settled_date- date-time field, its the date and time of transfer
         being settled.
@@ -187,8 +187,8 @@ class Transfer(models.Model):
         Currency,
         db_column='Waluta',
         on_delete=models.CASCADE)
-    outlay = models.ForeignKey(
-        Outlay,
+    expense = models.ForeignKey(
+        Expense,
         db_column='Wydatek',
         on_delete=models.CASCADE
     )
@@ -206,16 +206,16 @@ class Transfer(models.Model):
     def delete(self, *args, **kwargs):
         """
         Overrides delete method.
-        Gets outlay object, that deleted transfer was for and
+        Gets expense object, that deleted transfer was for and
         decreases its "settled" value by the amount of "brutto"
         from that transfer.
-        Performes update on outlay object and deletes transfer object.
+        Performes update on expense object and deletes transfer object.
         """
-        outlay = Outlay.objects.get(id=self.outlay.id)
-        outlay.settled -= self.brutto
+        expense = Expense.objects.get(id=self.expense.id)
+        expense.settled -= self.brutto
         try:
             with transaction.atomic():
-                outlay.save()
+                expense.save()
                 super(Transfer, self).delete(*args, **kwargs)
         except DatabaseError as de:
             raise str(de)
