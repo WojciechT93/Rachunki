@@ -82,7 +82,7 @@ class TransfersListView(generics.ListCreateAPIView):
     lookup_field = 'id'
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['is_setteld']
+    filterset_fields = ['is_settled']
 
     def get_queryset(self):
         if self.request.user.is_superuser:
@@ -91,6 +91,7 @@ class TransfersListView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
 
 class TransferDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Transfer.objects.all()
@@ -107,6 +108,7 @@ class TransferDetailView(generics.RetrieveUpdateDestroyAPIView):
         if self.request.user.is_superuser:
             return Transfer.objects.all()
         return Transfer.objects.filter(owner=self.request.user)
+
 
 class StatisticsListView(APIView):
     permission_classes = [IsAuthenticated]
