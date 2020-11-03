@@ -1,3 +1,7 @@
+"""
+Module providing model classes.
+"""
+
 from django.db import models
 from django.db import transaction, DatabaseError
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -188,8 +192,8 @@ class Transfer(models.Model):
         db_column='Wydatek',
         on_delete=models.CASCADE
     )
-    settled_date = models.DateTimeField(db_column='Data przelewu')
-    is_booked = models.BooleanField(db_column='Czy rozliczony?', default=False)
+    sent_date = models.DateTimeField(db_column='Data przelewu')
+    is_setted = models.BooleanField(db_column='Czy rozliczony?', default=False)
     owner = models.ForeignKey(
         'auth.User',
         db_column='Użytkownik',

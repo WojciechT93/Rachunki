@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User, Group
 from django.db.models import Avg, Sum
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status, generics
 from rest_framework.permissions import (
     IsAuthenticated, IsAdminUser,
@@ -9,7 +10,8 @@ from rest_framework.response import Response
 from .models import Transfer, Outlay, Currency
 from .serializers import (
     UserSerializer, GroupSerializer, TransferSerializer,
-    OutlaySerializer, CurrencySerializer, RegisterSerializer
+    OutlaySerializer, CurrencySerializer, RegisterSerializer,
+    SettleTransferSerializer
 )
 from .permissions import (
     CurrencyDetailAllowedMethods, CurrencyListAllowedMethods,
@@ -79,6 +81,8 @@ class TransfersListView(generics.ListCreateAPIView):
     serializer_class = TransferSerializer
     lookup_field = 'id'
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['is_setteld']
 
     def get_queryset(self):
         if self.request.user.is_superuser:
@@ -93,6 +97,11 @@ class TransferDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TransferSerializer
     lookup_field = 'id'
     permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.request.user.is_superuser:
+            return SettleTransferSerializer
+        return TransferSerializer
 
     def get_queryset(self):
         if self.request.user.is_superuser:

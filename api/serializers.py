@@ -1,6 +1,10 @@
+"""
+Module providing Serializers
+"""
+
 from datetime import datetime
 from django.contrib.auth.models import User, Group
-from django.db import transaction, DatabaseError
+from django.db import transaction
 from rest_framework import serializers, status
 from api.models import Outlay, Transfer, Currency
 
@@ -70,34 +74,36 @@ class TransferSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Transfer
-        fields = ['netto', 'vat', 'currency', 'outlay', 'is_vat']
+        fields = [
+            'netto',
+            'vat',
+            'brutto',
+            'currency',
+            'outlay',
+            'is_vat',
+            'sent_date',
+            'is_settled'
+        ]
+        read_only_fields = ['is_settled', 'brutto', 'sent_date']
 
     def create(self, validated_data):
         """
         Overrides create method for:
         counting "brutto",
-        seting "settled_date" on current time and date,
         checking if provided outley is valid.
-        If everything pass, then performs updates modified outlay
-        object and saves new transfer object in a transaction.
         """
         validated_data['brutto'] = (
             validated_data['netto'] + validated_data['vat']
         )
-        validated_data['settled_date'] = datetime.now()
-        outlay = self.check_and_change_outlay(validated_data)
-        try:
-            with transaction.atomic():
-                outlay.save()
-                return Transfer.objects.create(**validated_data)
-        except DatabaseError as error:
-            raise str(error) from error
+        validated_data['sent_date'] = datetime.now()
+        self.check_outlay(validated_data)
+        return Transfer.objects.create(**validated_data)
 
-    def check_and_change_outlay(self, data):
+    def check_outlay(self, data):
         """
-        Checks if provided outley is valid and counts outlays
-        new "settled" value.
-        Raises error if something is wrong.
+        Checks provides functions for checking if outlay matches the
+        transfer.
+        Raises error if there is no outlay for transfer.
         """
         outlay = Outlay.objects.get(id = data['outlay'].id)
         if outlay:
@@ -105,12 +111,10 @@ class TransferSerializer(serializers.ModelSerializer):
             self.check_if_outlay_vat(outlay.vat, data['is_vat'])
             self.check_if_is_settled(outlay.is_settled)
             self.check_if_same_currency(outlay.currency, data['currency'])
-            outlay.settled += data['brutto']
         else:
             raise serializers.ValidationError(
                 "There is no outlay for this transfer."
             )
-        return outlay
 
     @staticmethod
     def check_if_user_is_owner(outlay_owner, transfer_owner):
@@ -159,6 +163,40 @@ class TransferSerializer(serializers.ModelSerializer):
             res.status_code = status.HTTP_409_CONFLICT
             raise res
 
+class SettleTransferSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transfer
+        fields = [
+            'netto',
+            'vat',
+            'brutto',
+            'currency',
+            'outlay',
+            'is_vat',
+            'sent_date',
+            'is_settled'
+        ]
+        read_only_fields = [
+            'netto',
+            'vat',
+            'brutto',
+            'currency',
+            'outlay',
+            'is_vat',
+            'sent_date'
+        ]
+
+    def update(self, instance, validated_data):
+        if validated_data['is_settled']:
+            outlay = Outlay.objects.get(validated_data['outlay'].id)
+            outlay.settled += validated_data['brutto']
+            with transaction.atomic():
+                outlay.save()
+                return (super(SettleTransferSerializer,self)
+                            .update(instance, validated_data))
+
+        return (super(SettleTransferSerializer,self)
+                    .update(instance, validated_data))
 
 
 class CurrencySerializer(serializers.ModelSerializer):
