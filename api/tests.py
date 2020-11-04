@@ -168,7 +168,7 @@ class CurrencyListViewTestCase(APITestCase):
     """
     Tests CurrencyListView
     """
-    
+
     def setUp(self):
         self.superuser = User.objects.create_superuser(
             password='12345',
@@ -230,15 +230,66 @@ class CurrencyDetailViewTestCase(APITestCase):
         currency = Currency.objects.get(currency_name='EUR')
         self.assertEqual(currency.currency_name, 'EUR')
         self.client.logout()
-    
+
     def test_updating_currency_as_anonymous_user_error_status(self):
         data = {"currency_name":"BCD"}
         response = self.client.put("/currency/ABC/", data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-    
+
     def test_updating_currency_with_name_that_already_exists(self):
         data = {"currency_name":"JPY"}
         self.client.force_login(self.user)
         response = self.client.put("/currency/ABC/", data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.client.logout()
 
+    def test_destroying_currency(self):
+        self.client.login(
+            username='admin',
+            password='12345'
+        )
+        response = self.client.delete("/currency/JPY/")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+class ExpenseListViewTestCase(APITestCase):
+    """
+    Tests ExpenseListView.
+    """
+    def setUp(self):
+        self.currency1 = Currency.objects.create(
+            currency_name='PLN'
+        )
+        self.currency2 = Currency.objects.create(
+            currency_name='ABC'
+        )
+        self.currency3 = Currency.objects.create(
+            currency_name='JPY'
+        )
+        self.superuser = User.objects.create_superuser(
+            password='12345',
+            username='admin',
+            email='admin@user.test'
+        )
+        self.user = User.objects.create(
+            password='12345',
+            username='adam',
+            email='adam@user.test'
+        )
+
+
+    def test_admin_create_expense(self):
+        data = {
+            'currency':'PLN',
+            'total_amount':'1000',
+            'to_settle':'0',
+            'settled':'0',
+            'vat':'false',
+            'is_settled':'false',
+            'owner':'2'
+        }
+        self.client.login(
+            username='admin',
+            password='12345'
+        )
+        response=self.client.post('/expenses/',data)
+        self.assertEqual(response.status_code,status.HTTP_201_CREATED)
