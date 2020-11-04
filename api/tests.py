@@ -135,10 +135,11 @@ class CurrencySerializerTestCase(TestCase):
 
     def setUp(self):
         self.currency_json = {'currency_name':'PLN'}
-        self.serializer_data = {'currency_name':'USD'}
+
         self.currency = Currency.objects.create(**self.currency_json)
         self.serializer = CurrencySerializer(instance=self.currency)
 
     def test_contains_expected_fields(self):
         data = self.serializer.data
         self.assertEqual(data.keys(), set(['currency_name']))
+        self.assertEqual(data['currency_name'], 'PLN')
