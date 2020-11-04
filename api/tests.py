@@ -71,8 +71,10 @@ class ExpenseModelTestCase(TestCase):
 
     def test___str__(self):
 
-        self.assertEqual(str(self.expense), "Wydatek użytkownika Sam")
-        self.assertEqual(str(self.expense1), "Wydatek VAT użytkownika Sam")
+        self.assertEqual(str(self.expense),
+                        "ID 1 | Nie spłacony wydatek użytkownika Sam")
+        self.assertEqual(str(self.expense1),
+                        "ID 2 | Nie spłacony wydatek VAT użytkownika Sam")
 
 class TransferModelTestCase(TestCase):
     """
@@ -196,6 +198,10 @@ class CurrencyListViewTestCase(APITestCase):
         self.assertEqual(currency.currency_name, 'abc')
         self.client.logout()
 
+    def test_get_currencies_list(self):
+        response = self.client.get("/currencies/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
 class CurrencyDetailViewTestCase(APITestCase):
     """
     Tests CurrencyDetailView
@@ -250,6 +256,11 @@ class CurrencyDetailViewTestCase(APITestCase):
         )
         response = self.client.delete("/currency/JPY/")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+    
+    def test_get_currency(self):
+        self.client.force_login(self.user)
+        response = self.client.get("/currency/ABC/")
+        self.assertEqual(response.data, {"currency_name":"ABC"})
 
 class ExpenseListViewTestCase(APITestCase):
     """
@@ -275,21 +286,36 @@ class ExpenseListViewTestCase(APITestCase):
             username='adam',
             email='adam@user.test'
         )
-
-
-    def test_admin_create_expense(self):
-        data = {
+        self.data1 = {
             'currency':'PLN',
             'total_amount':'1000',
-            'to_settle':'0',
-            'settled':'0',
             'vat':'false',
-            'is_settled':'false',
             'owner':'2'
         }
+        self.data2 = {
+            'currency':'PLN',
+            'total_amount':'1000',
+            'vat':'false',
+            'owner':'2'
+        }
+        self.data3 = {
+            'currency':'PLN',
+            'total_amount':'1000',
+            'vat':'false',
+            'owner':'2'
+        }
+
+    def test_admin_create_expense(self):
         self.client.login(
             username='admin',
             password='12345'
         )
-        response=self.client.post('/expenses/',data)
+        response=self.client.post('/expenses/', self.data1)
         self.assertEqual(response.status_code,status.HTTP_201_CREATED)
+        self.assertEqual(Expense.objects.all().count(), 1)
+
+    def test_get_expenses_list(self):
+        self.client.force_login(self.user)
+        response=self.client.get('/expenses/')
+        self.assertEqual(response.status_code,status.HTTP_200_OK)
+
