@@ -84,9 +84,10 @@ class TransferSerializer(serializers.ModelSerializer):
             'expense',
             'is_vat',
             'sent_date',
-            'is_settled'
+            'is_settled',
+            'owner'
         ]
-        read_only_fields = ['id', 'is_settled', 'brutto', 'sent_date']
+        read_only_fields = ['id', 'is_settled', 'brutto', 'sent_date','owner']
 
     def create(self, validated_data):
         """
