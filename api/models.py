@@ -120,13 +120,14 @@ class Expense(models.Model):
         """
         Returns string represenatation of Expense objest.
         Example string:
-        Przelew VAT użytkownika Bogdan.
+        ID 1 Nie spłacony wydatek VAT użytkownika Bogdan.
         """
 
-        return ("Wydatek " + ("VAT " if self.vat else '') + "użytkownika "
+        return ("ID " + str(self.id)
+                + (" | Spłacony" if self.is_settled else " | Nie spłacony")
+                + " wydatek "
+                + ("VAT " if self.vat else "") + "użytkownika "
                 + str(self.owner))
-
-
 
 
 class Transfer(models.Model):
@@ -187,6 +188,8 @@ class Transfer(models.Model):
         db_column='Użytkownik',
         on_delete=models.CASCADE
     )
+    class Meta:
+        db_table = "Przelew"
 
     def delete(self, *args, **kwargs):
         """
@@ -205,5 +208,15 @@ class Transfer(models.Model):
         except DatabaseError as de:
             raise str(de)
 
-    class Meta:
-        db_table = "Przelew"
+    def __str__(self):
+        """
+        Returns string represenatation of Transfer object.
+        Example string:
+        ID 1 | Nie rozliczony przelew VAT użytkownika Bogdan.
+        """
+
+        return ("ID " + str(self.id)
+                + (" | Rozliczony" if self.is_settled else " | Nie rozliczony")
+                + " przelew "
+                + ("VAT " if self.is_vat else "") + "użytkownika "
+                + str(self.owner))
