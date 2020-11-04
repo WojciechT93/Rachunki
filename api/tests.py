@@ -2,9 +2,13 @@ import time
 from datetime import datetime
 from django.test import TestCase
 from django.contrib.auth.models import User
-from rest_framework.test import APITestCase, URLPatternsTestCase
+from rest_framework.test import (
+    APITestCase, URLPatternsTestCase, APIRequestFactory, APIClient,
+    force_authenticate
+)
+from rest_framework import status
 from api.models import Transfer, Expense, Currency
-from .serializers import CurrencySerializer
+from .serializers import CurrencySerializer, ExpenseSerializer
 
 # Create your tests here.
 
@@ -66,7 +70,7 @@ class ExpenseModelTestCase(TestCase):
         self.assertEqual(updated_expense5.is_settled, False)
 
     def test___str__(self):
-        
+
         self.assertEqual(str(self.expense), "Wydatek użytkownika Sam")
         self.assertEqual(str(self.expense1), "Wydatek VAT użytkownika Sam")
 
@@ -112,7 +116,7 @@ class TransferModelTestCase(TestCase):
             is_settled=False,
             owner=self.user
         )
-    
+
     def test_overriden_delete_method(self):
         """
         Tests overriden delete method.
@@ -142,4 +146,99 @@ class CurrencySerializerTestCase(TestCase):
     def test_contains_expected_fields(self):
         data = self.serializer.data
         self.assertEqual(data.keys(), set(['currency_name']))
+
+    def test_contains_expected_values(self):
+        data = self.serializer.data
         self.assertEqual(data['currency_name'], 'PLN')
+
+class RegisterViewTestCase(APITestCase):
+    """
+    Tests RegisterView
+    """
+    def test_registration(self):
+        data = {
+            "username":"test",
+            "email":"test@test.test",
+            "password":"password"
+        }
+        response = self.client.post("/register/", data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+class CurrencyListViewTestCase(APITestCase):
+    """
+    Tests CurrencyListView
+    """
+    
+    def setUp(self):
+        self.superuser = User.objects.create_superuser(
+            password='12345',
+            username='admin',
+            email='admin@user.test'
+        )
+        self.user = User.objects.create(
+            password='12345',
+            username='adam',
+            email='adam@user.test'
+        )
+        self.currency = Currency.objects.create(
+            currency_name='PLN'
+        )
+
+    def test_creating_currency(self):
+        data = {"currency_name":"abc"}
+        self.client.login(
+            username='admin',
+            password='12345'
+        )
+        response = self.client.post("/currencies/", data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        currency = Currency.objects.get(currency_name="abc")
+        self.assertEqual(currency.currency_name, 'abc')
+        self.client.logout()
+
+class CurrencyDetailViewTestCase(APITestCase):
+    """
+    Tests CurrencyDetailView
+    """
+    def setUp(self):
+        self.superuser = User.objects.create_superuser(
+            password='12345',
+            username='admin',
+            email='admin@user.test'
+        )
+        self.user = User.objects.create(
+            password='12345',
+            username='adam',
+            email='adam@user.test'
+        )
+        self.currency = Currency.objects.create(
+            currency_name='PLN'
+        )
+        self.currency = Currency.objects.create(
+            currency_name='ABC'
+        )
+        self.currency = Currency.objects.create(
+            currency_name='JPY'
+        )
+
+    def test_updating_currency(self):
+        data = {"currency_name":"EUR"}
+        self.client.force_login(self.user)
+        response = self.client.put("/currency/PLN/", data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK)
+        currency = Currency.objects.get(currency_name='EUR')
+        self.assertEqual(currency.currency_name, 'EUR')
+        self.client.logout()
+    
+    def test_updating_currency_as_anonymous_user_error_status(self):
+        data = {"currency_name":"BCD"}
+        response = self.client.put("/currency/ABC/", data)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    
+    def test_updating_currency_with_name_that_already_exists(self):
+        data = {"currency_name":"JPY"}
+        self.client.force_login(self.user)
+        response = self.client.put("/currency/ABC/", data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
