@@ -18,7 +18,7 @@ class CurrencyDetailAllowedMethods(BasePermission):
 
     def has_permission(self, request, view):
         if ((request.method in self.user_methods and
-                request.user.is_authenticated) or 
+                request.user.is_authenticated) or
                 request.user.is_superuser):
             return True
         return False
@@ -40,12 +40,25 @@ class ExpensesListAllowedMethods(BasePermission):
     """
     Works with ExpensesListView.
     Gives only GET permissions for authorized user.
-    Unauthorized users get nothing.
     Admin Gets permissions for all actions.
     """
     user_methods = ['GET']
 
     def has_permission(self, request, view):
         if request.method in self.user_methods or request.user.is_superuser:
+            return True
+        return False
+
+class TransferDetailViewAllowedMethods(BasePermission):
+    """
+    Works with TransferDetialView.
+    Gives only GET and DELETE permissions for autheticated user.
+    """
+    user_methods = ['GET', 'DELETE']
+
+    def has_permission(self, request,view):
+        if ((request.method in self.user_methods and
+                request.user.is_authenticated) or
+                request.user.is_superuser):
             return True
         return False
