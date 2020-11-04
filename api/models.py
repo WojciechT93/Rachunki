@@ -79,16 +79,6 @@ class Expense(models.Model):
     class Meta:
         db_table = "Wydatek"
 
-    def __init__(self, *args, **kwargs):
-        """
-        Overrides __init__.
-        Saves 'settled' value of Expense objects
-        for updates purposes.
-        """
-
-        super(Expense, self).__init__(*args, **kwargs)
-        self.old_settled = self.settled
-
     def save(self, *args, **kwargs):
         """
         Overrides save method with custom methods counting
@@ -96,9 +86,8 @@ class Expense(models.Model):
         """
 
         self.count_to_settle()
-        self.check_if_is_settled()
+        self.manage_is_settled()
         super(Expense, self).save(*args, **kwargs)
-        self.old_settled = self.settled
 
     def count_to_settle(self):
         """
@@ -108,25 +97,20 @@ class Expense(models.Model):
         If counted 'to_settle' value is higher then 'total_amount',
         sets its value to 'total_amount'.
         """
-        self.to_settle = self.total_amount
-        if self.old_settled < self.settled:
-            self.to_settle = (
-                self.to_settle - (self.settled - self.old_settled)
-            )
-        else:
-            self.to_settle = (
-                self.to_settle + (self.old_settled - self.settled)
-            )
+
+        self.to_settle = self.total_amount - self.settled
+
         if self.to_settle < 0:
             self.to_settle = 0
         if self.to_settle > self.total_amount:
             self.to_settle = self.total_amount
 
-    def check_if_is_settled(self):
+    def manage_is_settled(self):
         """
         Checks if 'to_settle' value is 0, if true then sets 'is_settled'
-        value to 'True'. If false, sets 'is_settled' to false.
+        value to 'True'. Else sets 'is_settled' to false.
         """
+
         if self.to_settle == 0:
             self.is_settled = True
         else:
@@ -134,11 +118,12 @@ class Expense(models.Model):
 
     def __str__(self):
         """
-        Returns string represenatation of expense objest.
+        Returns string represenatation of Expense objest.
         Example string:
         Przelew VAT użytkownika Bogdan.
         """
-        return ("Wydatek " + ("VAT" if self.vat else '') + " użytkownika "
+
+        return ("Wydatek " + ("VAT " if self.vat else '') + "użytkownika "
                 + str(self.owner))
 
 
@@ -206,10 +191,10 @@ class Transfer(models.Model):
     def delete(self, *args, **kwargs):
         """
         Overrides delete method.
-        Gets expense object, that deleted transfer was for and
+        Gets Expense object, that deleted transfer was for and
         decreases its "settled" value by the amount of "brutto"
         from that transfer.
-        Performes update on expense object and deletes transfer object.
+        Performes update on Expense object and deletes transfer object.
         """
         expense = Expense.objects.get(id=self.expense.id)
         expense.settled -= self.brutto
