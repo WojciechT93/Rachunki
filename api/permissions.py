@@ -17,8 +17,7 @@ class CurrencyDetailAllowedMethods(BasePermission):
     user_methods = ['GET', 'PUT', 'PATCH']
 
     def has_permission(self, request, view):
-        if ((request.method in self.user_methods and
-                request.user.is_authenticated) or
+        if (request.method in self.user_methods or
                 request.user.is_superuser):
             return True
         return False
@@ -55,10 +54,13 @@ class TransferDetailViewAllowedMethods(BasePermission):
     Gives only GET and DELETE permissions for autheticated user.
     """
     user_methods = ['GET', 'DELETE']
+    admin_methods = ['GET', 'PUT']
 
     def has_permission(self, request,view):
-        if ((request.method in self.user_methods and
-                request.user.is_authenticated) or
+        if (request.method in self.admin_methods and
                 request.user.is_superuser):
+            return True
+        elif (request.method in self.user_methods and
+                not request.user.is_superuser):
             return True
         return False
