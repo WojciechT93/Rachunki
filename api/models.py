@@ -143,7 +143,7 @@ class Transfer(models.Model):
         the transfer has been sent
     settled_date- date-time field, its the date and time of transfer
         being settled.
-    is_booked- boolean field, True value means that transfer has
+    is_settled- boolean field, True value means that transfer has
         been settled
     owner- foreign key of user object, provides user that made the
         transfer
