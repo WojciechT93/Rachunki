@@ -1,7 +1,7 @@
 """
 Module providing Serializers
 """
-
+import pytz
 from datetime import datetime
 from django.contrib.auth.models import User, Group
 from django.db import transaction
@@ -98,7 +98,7 @@ class TransferSerializer(serializers.ModelSerializer):
         validated_data['brutto'] = (
             validated_data['netto'] + validated_data['vat']
         )
-        validated_data['sent_date'] = datetime.now()
+        validated_data['sent_date'] = datetime.now(pytz.utc)
         self.check_expense(validated_data)
         return Transfer.objects.create(**validated_data)
 

@@ -1,4 +1,4 @@
-import time
+import time, pytz
 from datetime import datetime
 from django.test import TestCase
 from django.contrib.auth.models import User
@@ -114,7 +114,7 @@ class TransferModelTestCase(TestCase):
             brutto=70,
             expense=self.expense,
             currency=self.currency,
-            sent_date=datetime.now(),
+            sent_date=datetime.now(pytz.utc),
             is_settled=False,
             owner=self.user
         )
@@ -256,7 +256,7 @@ class CurrencyDetailViewTestCase(APITestCase):
         )
         response = self.client.delete("/currency/JPY/")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-    
+
     def test_get_currency(self):
         self.client.force_login(self.user)
         response = self.client.get("/currency/ABC/")
@@ -318,4 +318,3 @@ class ExpenseListViewTestCase(APITestCase):
         self.client.force_login(self.user)
         response=self.client.get('/expenses/')
         self.assertEqual(response.status_code,status.HTTP_200_OK)
-
