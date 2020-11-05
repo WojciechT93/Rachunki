@@ -1,6 +1,6 @@
 Clone project from Github and setup instructions:
 
-git clone git@github.com:WojciechT93/Rachunki.git
+git clone https://github.com/WojciechT93/Rachunki.git
 
 In the "Rachunki" folder run:
 
