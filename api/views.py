@@ -233,8 +233,8 @@ class StatisticsListView(APIView):
                                              ).filter(currency='USD'
                                              ).aggregate(Sum('to_settle'))
             avg_vat = Transfer.objects.filter(is_vat=True
-                                     ).filter(sent_date__year__gte=2020
-                                     ).filter(sent_date__month__gte=10
+                                     ).filter(sent_date__year=2020
+                                     ).filter(sent_date__month=10
                                      ).aggregate(Avg('brutto'))
             sum_settled = Expense.objects.filter(is_settled=True
                                        ).aggregate(Sum('settled'))
@@ -245,8 +245,8 @@ class StatisticsListView(APIView):
                                              ).aggregate(Sum('to_settle'))
             avg_vat = Transfer.objects.filter(owner=self.request.user
                                      ).filter(is_vat=True
-                                     ).filter(sent_date__year__gte=2020
-                                     ).filter(sent_date__month__gte=10
+                                     ).filter(sent_date__year=2020
+                                     ).filter(sent_date__month=10
                                      ).aggregate(Avg('brutto'))
             sum_settled = Expense.objects.filter(owner=self.request.user
                                        ).filter(is_settled=True
