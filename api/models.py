@@ -194,19 +194,26 @@ class Transfer(models.Model):
     def delete(self, *args, **kwargs):
         """
         Overrides delete method.
-        Gets Expense object, that deleted transfer was for and
-        decreases its "settled" value by the amount of "brutto"
-        from that transfer.
-        Performes update on Expense object and deletes transfer object.
+        If deleted transfer has "is_settled" on true:
+            Gets Expense object, that deleted transfer was for and
+            decreases its "settled" value by the amount of "brutto"
+            from that transfer.
+            Performes update on Expense object and deletes transfer object.
+
+        else:
+            Deletes transfer object.
         """
-        expense = Expense.objects.get(id=self.expense.id)
-        expense.settled -= self.brutto
-        try:
-            with transaction.atomic():
-                expense.save()
-                super(Transfer, self).delete(*args, **kwargs)
-        except DatabaseError as de:
-            raise str(de)
+        if self.is_settled:
+            expense = Expense.objects.get(id=self.expense.id)
+            expense.settled -= self.brutto
+            try:
+                with transaction.atomic():
+                    expense.save()
+                    super(Transfer, self).delete(*args, **kwargs)
+            except DatabaseError as de:
+                raise str(de)
+        else:
+            super(Transfer, self).delete(*args, **kwargs)
 
     def __str__(self):
         """
